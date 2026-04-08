@@ -1,6 +1,6 @@
-# Luxi Wear Flutter App — Full UI Kit
+# Luxe-Wear Flutter App — Full UI Kit
 
-Complete Flutter implementation of all 5 Luxi Wear screens with full navigation, logic & animations.
+Complete Flutter implementation of all 5 Luxe-Wear screens with full navigation, logic & animations.
 
 ## Features & Logic
 
@@ -46,4 +46,4 @@ Complete Flutter implementation of all 5 Luxi Wear screens with full navigation,
 
 If error:
 flutter clean → flutter pub get → flutter run
-# StyleShape-Mobile-App
+# Luxe-Wear-Mobile-App
