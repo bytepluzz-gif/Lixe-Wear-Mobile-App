@@ -47,3 +47,12 @@ Complete Flutter implementation of all 5 Luxe-Wear screens with full navigation,
 If error:
 flutter clean → flutter pub get → flutter run
 # Luxe-Wear-Mobile-App
+
+## Firebase Setup For Production
+
+- Ensure your app is linked with your Firebase project using FlutterFire CLI.
+- Firestore security rules are in `firestore.rules`.
+- Deploy rules with:
+  - `firebase login`
+  - `firebase use <your-project-id>`
+  - `firebase deploy --only firestore:rules`# Lixe-Wear-Mobile-App
