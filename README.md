@@ -56,3 +56,4 @@ flutter clean → flutter pub get → flutter run
   - `firebase login`
   - `firebase use <your-project-id>`
   - `firebase deploy --only firestore:rules`# Lixe-Wear-Mobile-App
+# Style-Shape-Fashion-Mobile-App
