@@ -1,11 +1,17 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:provider/provider.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+import '../../core/auth_provider.dart';
+import '../../core/firestore_service.dart';
 
 class ProfileScreen extends StatelessWidget {
   const ProfileScreen({super.key});
 
   @override
   Widget build(BuildContext context) {
+    final user = FirebaseAuth.instance.currentUser;
+    final uid = user?.uid;
     return Scaffold(
       backgroundColor: const Color(0xFFF9F9F4),
       appBar: AppBar(
@@ -35,7 +41,16 @@ class ProfileScreen extends StatelessWidget {
           ),
         ],
       ),
-      body: SingleChildScrollView(
+      body: uid == null
+          ? const Center(child: Text('Please sign in'))
+          : StreamBuilder(
+              stream: context.read<FirestoreService>().userProfileStream(uid),
+              builder: (context, snapshot) {
+                final data = snapshot.data?.data() ?? {};
+                final name =
+                    data['fullName'] as String? ?? user?.displayName ?? 'User';
+                final email = data['email'] as String? ?? user?.email ?? '';
+                return SingleChildScrollView(
         padding: const EdgeInsets.symmetric(horizontal: 24),
         child: Column(
           children: [
@@ -52,8 +67,11 @@ class ProfileScreen extends StatelessWidget {
                   ),
                   child: const CircleAvatar(
                     radius: 50,
-                    backgroundImage: NetworkImage(
-                      "https://picsum.photos/id/177/200/200",
+                    backgroundColor: Color(0xFFF0F0E8),
+                    child: Icon(
+                      Icons.person,
+                      size: 48,
+                      color: Color(0xFF4A7043),
                     ),
                   ),
                 ),
@@ -77,7 +95,7 @@ class ProfileScreen extends StatelessWidget {
             ),
             const SizedBox(height: 16),
             Text(
-              "Sophia Williams",
+              name,
               style: GoogleFonts.poppins(
                 fontSize: 20,
                 fontWeight: FontWeight.bold,
@@ -85,7 +103,7 @@ class ProfileScreen extends StatelessWidget {
               ),
             ),
             Text(
-              "sophia.williams@email.com",
+              email,
               style: GoogleFonts.poppins(
                 fontSize: 12,
                 color: const Color(0xFF9E9E9E),
@@ -99,7 +117,11 @@ class ProfileScreen extends StatelessWidget {
               "Personal Information",
               onTap: () => Navigator.pushNamed(context, '/personal-info'),
             ),
-            _buildProfileMenu(Icons.shopping_bag_outlined, "Orders"),
+            _buildProfileMenu(
+              Icons.shopping_bag_outlined,
+              "Orders",
+              onTap: () => Navigator.pushNamed(context, '/orders'),
+            ),
             _buildProfileMenu(
               Icons.credit_card_outlined,
               "My Card",
@@ -119,7 +141,7 @@ class ProfileScreen extends StatelessWidget {
               height: 60,
               child: OutlinedButton(
                 onPressed: () =>
-                    Navigator.pushReplacementNamed(context, '/login'),
+                    context.read<AppAuthProvider>().signOut(),
                 style: OutlinedButton.styleFrom(
                   side: const BorderSide(color: Colors.red),
                   shape: RoundedRectangleBorder(
@@ -139,7 +161,9 @@ class ProfileScreen extends StatelessWidget {
             const SizedBox(height: 40),
           ],
         ),
-      ),
+      );
+              },
+            ),
     );
   }
 

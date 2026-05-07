@@ -1,44 +1,48 @@
 import 'package:flutter/material.dart';
 import '../../product/model/product.dart';
-
-class CartItem {
-  final Product product;
-  int quantity;
-
-  CartItem({required this.product, this.quantity = 1});
-}
+import '../../../core/firestore_service.dart';
 
 class CartProvider extends ChangeNotifier {
+  final FirestoreService _service = FirestoreService();
   final List<CartItem> _cart = [];
+  String? _uid;
 
   List<CartItem> get cart => _cart;
 
   double get total =>
       _cart.fold(0, (sum, item) => sum + (item.product.price * item.quantity));
 
-  void addToCart(Product product) {
-    final index = _cart.indexWhere((item) => item.product.id == product.id);
-    if (index != -1) {
-      _cart[index].quantity++;
-    } else {
-      _cart.add(CartItem(product: product));
-    }
-    notifyListeners();
+  void attachUser(String uid) {
+    _uid = uid;
+    _service.cartStream(uid).listen((items) {
+      _cart
+        ..clear()
+        ..addAll(items);
+      notifyListeners();
+    });
   }
 
-  void removeFromCart(CartItem item) {
-    _cart.remove(item);
-    notifyListeners();
+  Future<void> addToCart(Product product, String size) async {
+    final uid = _uid;
+    if (uid == null) return;
+    await _service.addToCart(uid, product, size);
   }
 
-  void updateQuantity(CartItem item, int qty) {
-    if (qty < 1) return;
-    item.quantity = qty;
-    notifyListeners();
+  Future<void> removeFromCart(CartItem item) async {
+    final uid = _uid;
+    if (uid == null) return;
+    await _service.removeFromCart(uid, item.product, item.size);
   }
 
-  void clearCart() {
-    _cart.clear();
-    notifyListeners();
+  Future<void> updateQuantity(CartItem item, int qty) async {
+    final uid = _uid;
+    if (uid == null) return;
+    await _service.updateCartQuantity(uid, item.product, item.size, qty);
+  }
+
+  Future<void> clearCart() async {
+    final uid = _uid;
+    if (uid == null) return;
+    await _service.clearCart(uid);
   }
 }

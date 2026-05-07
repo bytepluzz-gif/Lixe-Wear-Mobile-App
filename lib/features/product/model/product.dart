@@ -1,4 +1,3 @@
-// lib/models/product.dart
 class Product {
   final String id;
   final String name;
@@ -19,11 +18,37 @@ class Product {
     this.sizes = const [],
     this.description = '',
   });
+
+  factory Product.fromMap(String id, Map<String, dynamic> data) {
+    return Product(
+      id: id,
+      name: data['name'] as String? ?? '',
+      price: (data['price'] as num?)?.toDouble() ?? 0,
+      imageUrl: data['imageUrl'] as String? ?? '',
+      category: data['category'] as String? ?? 'Uncategorized',
+      colors: List<String>.from(data['colors'] as List? ?? const []),
+      sizes: List<String>.from(data['sizes'] as List? ?? const []),
+      description: data['description'] as String? ?? '',
+    );
+  }
+
+  Map<String, dynamic> toMap() {
+    return {
+      'name': name,
+      'price': price,
+      'imageUrl': imageUrl,
+      'category': category,
+      'colors': colors,
+      'sizes': sizes,
+      'description': description,
+    };
+  }
 }
 
 class CartItem {
   final Product product;
+  final String size;
   int quantity;
 
-  CartItem({required this.product, this.quantity = 1});
+  CartItem({required this.product, required this.size, this.quantity = 1});
 }

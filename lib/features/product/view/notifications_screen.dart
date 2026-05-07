@@ -1,87 +1,43 @@
 import 'package:flutter/material.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+import 'package:provider/provider.dart';
+import '../../../core/firestore_service.dart';
 
 class NotificationsScreen extends StatelessWidget {
   const NotificationsScreen({super.key});
 
   @override
   Widget build(BuildContext context) {
+    final uid = FirebaseAuth.instance.currentUser?.uid;
     return Scaffold(
       appBar: AppBar(
         title: const Text("Notifications"),
         backgroundColor: Colors.white,
       ),
-      body: SingleChildScrollView(
-        padding: const EdgeInsets.all(20),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            // Today Section
-            const Text(
-              "Today",
-              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+      body: uid == null
+          ? const Center(child: Text('Please sign in'))
+          : StreamBuilder(
+              stream: context.read<FirestoreService>().notificationsStream(uid),
+              builder: (context, snapshot) {
+                final notifications = snapshot.data ?? [];
+                if (notifications.isEmpty) {
+                  return const Center(child: Text('No notifications yet'));
+                }
+                return ListView.builder(
+                  padding: const EdgeInsets.all(20),
+                  itemCount: notifications.length,
+                  itemBuilder: (context, index) {
+                    final data = notifications[index].data();
+                    return _notificationCard(
+                      data['title'] as String? ?? 'Update',
+                      data['message'] as String? ?? '',
+                      'recently',
+                      null,
+                    );
+                  },
+                );
+              },
             ),
-            const SizedBox(height: 12),
-            _notificationCard(
-              "Order Updates",
-              "Your order #FASH3921 has been shipped. Track your order now.",
-              "2h ago",
-              "https://picsum.photos/id/201/600/400",
-            ),
-
-            const SizedBox(height: 30),
-
-            // This Week
-            const Text(
-              "This Week",
-              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-            ),
-            const SizedBox(height: 12),
-            _notificationCard(
-              "New Arrivals",
-              "Fresh drop: Linen Essentials collection is now live.",
-              "Yesterday",
-              "https://picsum.photos/id/870/600/400",
-            ),
-            const SizedBox(height: 12),
-            _notificationCard(
-              "Promotions",
-              "Get 20% off on your first order with code WELCOME20",
-              "3 days ago",
-              null,
-            ),
-
-            const SizedBox(height: 40),
-
-            // Settings Toggles
-            const Text(
-              "Notification Settings",
-              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-            ),
-            const SizedBox(height: 16),
-
-            _toggleTile("Order Updates", true),
-            _toggleTile("New Arrivals", true),
-            _toggleTile("Promotions", false),
-            _toggleTile("Style Tips", true),
-            _toggleTile("Do Not Disturb", false),
-
-            const SizedBox(height: 20),
-            Center(
-              child: ElevatedButton(
-                onPressed: () {},
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: const Color(0xFF4A7043),
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 40,
-                    vertical: 14,
-                  ),
-                ),
-                child: const Text("Save Preferences"),
-              ),
-            ),
-          ],
-        ),
-      ),
     );
   }
 
@@ -132,12 +88,4 @@ class NotificationsScreen extends StatelessWidget {
     );
   }
 
-  Widget _toggleTile(String title, bool value) {
-    return SwitchListTile(
-      title: Text(title),
-      value: value,
-      onChanged: (bool newValue) {},
-      activeThumbColor: const Color(0xFF4A7043),
-    );
-  }
 }

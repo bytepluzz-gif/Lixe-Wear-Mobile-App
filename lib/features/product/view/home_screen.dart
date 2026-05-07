@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:google_fonts/google_fonts.dart';
-import '../../../core/app_data.dart';
+import '../../../core/firestore_service.dart';
 import '../model/product.dart';
 import '../viewmodel/favorites_provider.dart';
 
@@ -24,7 +24,7 @@ class _HomeScreenState extends State<HomeScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final recommended = AppData.recommended;
+    final service = context.read<FirestoreService>();
 
     return Scaffold(
       backgroundColor: const Color(0xFFF9F9F4),
@@ -63,7 +63,7 @@ class _HomeScreenState extends State<HomeScreen> {
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             Text(
-                              "Welcome back, Alex",
+                              "Welcome",
                               style: TextStyle(
                                 fontSize: 13,
                                 color: const Color(0xFF757575),
@@ -82,36 +82,13 @@ class _HomeScreenState extends State<HomeScreen> {
                         ),
                       ],
                     ),
-                    Stack(
-                      children: [
-                        IconButton(
-                          icon: const Icon(
-                            Icons.notifications_none_outlined,
-                            color: Color(0xFF042404),
-                          ),
-                          onPressed: () =>
-                              Navigator.pushNamed(context, '/notifications'),
-                        ),
-                        Positioned(
-                          right: 8,
-                          top: 8,
-                          child: Container(
-                            padding: const EdgeInsets.all(4),
-                            decoration: const BoxDecoration(
-                              color: Color(0xFF4A7043),
-                              shape: BoxShape.circle,
-                            ),
-                            child: const Text(
-                              "2",
-                              style: TextStyle(
-                                color: Colors.white,
-                                fontSize: 7,
-                                fontWeight: FontWeight.bold,
-                              ),
-                            ),
-                          ),
-                        ),
-                      ],
+                    IconButton(
+                      icon: const Icon(
+                        Icons.notifications_none_outlined,
+                        color: Color(0xFF042404),
+                      ),
+                      onPressed: () =>
+                          Navigator.pushNamed(context, '/notifications'),
                     ),
                   ],
                 ),
@@ -202,7 +179,7 @@ class _HomeScreenState extends State<HomeScreen> {
 
               const SizedBox(height: 24),
 
-              // Hero Carousel (Summer 2024)
+              // Hero Carousel (same as before)
               Container(
                 margin: const EdgeInsets.symmetric(horizontal: 24),
                 height: 220,
@@ -212,7 +189,7 @@ class _HomeScreenState extends State<HomeScreen> {
                     ClipRRect(
                       borderRadius: BorderRadius.circular(24),
                       child: Image.network(
-                        "https://images.unsplash.com/photo-1490481651871-ab68de25d43d?ixlib=rb-4.0.3&auto=format&fit=crop&w=1000&q=80",
+                        "https://images.unsplash.com/photo-1490481651871-ab68de25d43d?auto=format&fit=crop&w=1000&q=80",
                         fit: BoxFit.cover,
                         errorBuilder: (context, error, stackTrace) =>
                             Container(color: Colors.grey[300]),
@@ -234,7 +211,7 @@ class _HomeScreenState extends State<HomeScreen> {
                         mainAxisAlignment: MainAxisAlignment.end,
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          Text(
+                          const Text(
                             "Summer 2024",
                             style: TextStyle(
                               color: Colors.white,
@@ -242,7 +219,7 @@ class _HomeScreenState extends State<HomeScreen> {
                               fontWeight: FontWeight.w500,
                             ),
                           ),
-                          Text(
+                          const Text(
                             "Effortless Minimalism",
                             style: TextStyle(
                               color: Colors.white,
@@ -252,7 +229,8 @@ class _HomeScreenState extends State<HomeScreen> {
                           ),
                           const SizedBox(height: 12),
                           ElevatedButton(
-                            onPressed: () {},
+                            onPressed: () =>
+                                Navigator.pushNamed(context, '/product-listing'),
                             style: ElevatedButton.styleFrom(
                               backgroundColor: Colors.white,
                               foregroundColor: Colors.black,
@@ -264,7 +242,7 @@ class _HomeScreenState extends State<HomeScreen> {
                                 vertical: 8,
                               ),
                             ),
-                            child: Text(
+                            child: const Text(
                               "Shop the Collection",
                               style: TextStyle(
                                 fontSize: 12,
@@ -281,58 +259,7 @@ class _HomeScreenState extends State<HomeScreen> {
 
               const SizedBox(height: 32),
 
-              // Style Concierge
-              Container(
-                margin: const EdgeInsets.symmetric(horizontal: 24),
-                padding: const EdgeInsets.all(20),
-                decoration: BoxDecoration(
-                  color: const Color(0xFF042404),
-                  borderRadius: BorderRadius.circular(24),
-                ),
-                child: Row(
-                  children: [
-                    CircleAvatar(
-                      radius: 24,
-                      backgroundImage: const NetworkImage(
-                        "https://images.unsplash.com/photo-1438761681033-6461ffad8d80?ixlib=rb-4.0.3&auto=format&fit=crop&w=200&q=80",
-                      ),
-                      onBackgroundImageError: (e, s) {},
-                    ),
-                    const SizedBox(width: 16),
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            "Your Style Concierge",
-                            style: TextStyle(
-                              color: Colors.white,
-                              fontWeight: FontWeight.bold,
-                              fontSize: 16,
-                            ),
-                          ),
-                          Text(
-                            "Get personalized recommendations",
-                            style: TextStyle(
-                              color: Colors.white70,
-                              fontSize: 12,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                    const Icon(
-                      Icons.arrow_forward_ios,
-                      color: Colors.white,
-                      size: 16,
-                    ),
-                  ],
-                ),
-              ),
-
-              const SizedBox(height: 32),
-
-              // Recommended Grid
+              // Recommended Title
               Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 24.0),
                 child: Row(
@@ -346,96 +273,60 @@ class _HomeScreenState extends State<HomeScreen> {
                         color: const Color(0xFF042404),
                       ),
                     ),
-                    Text(
-                      "See All",
-                      style: GoogleFonts.poppins(
-                        fontSize: 13,
-                        color: const Color(0xFF4A7043),
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-
-              GridView.builder(
-                shrinkWrap: true,
-                physics: const NeverScrollableScrollPhysics(),
-                padding: const EdgeInsets.all(24),
-                gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                  crossAxisCount: 2,
-                  childAspectRatio: 0.65,
-                  crossAxisSpacing: 16,
-                  mainAxisSpacing: 16,
-                ),
-                itemCount: 4, // Just 4 for home
-                itemBuilder: (context, index) =>
-                    _productCard(recommended[index]),
-              ),
-
-              // Join the Inner Circle
-              Container(
-                margin: const EdgeInsets.all(24),
-                padding: const EdgeInsets.all(30),
-                decoration: BoxDecoration(
-                  color: const Color(0xFFF0F0E8),
-                  borderRadius: BorderRadius.circular(32),
-                  border: Border.all(color: const Color(0xFFEEEEEE)),
-                ),
-                child: Column(
-                  children: [
-                    Text(
-                      "Join the Inner Circle",
-                      style: GoogleFonts.poppins(
-                        fontSize: 22,
-                        fontWeight: FontWeight.bold,
-                        color: const Color(0xFF042404),
-                      ),
-                    ),
-                    const SizedBox(height: 8),
-                    Text(
-                      "Subscribe for early access to sales and new drops.",
-                      textAlign: TextAlign.center,
-                      style: GoogleFonts.poppins(
-                        fontSize: 13,
-                        color: Colors.grey[700],
-                      ),
-                    ),
-                    const SizedBox(height: 24),
-                    Container(
-                      decoration: BoxDecoration(
-                        color: Colors.white,
-                        borderRadius: BorderRadius.circular(30),
-                      ),
-                      child: TextField(
-                        decoration: InputDecoration(
-                          hintText: "Enter your email",
-                          hintStyle: GoogleFonts.poppins(
-                            color: Colors.grey[400],
-                            fontSize: 13,
-                          ),
-                          border: InputBorder.none,
-                          contentPadding: const EdgeInsets.symmetric(
-                            horizontal: 20,
-                          ),
-                          suffixIcon: Container(
-                            margin: const EdgeInsets.all(4),
-                            decoration: const BoxDecoration(
-                              color: Color(0xFF042404),
-                              shape: BoxShape.circle,
-                            ),
-                            child: const Icon(
-                              Icons.arrow_forward,
-                              color: Colors.white,
-                              size: 18,
-                            ),
-                          ),
+                    GestureDetector(
+                      onTap: () =>
+                          Navigator.pushNamed(context, '/product-listing'),
+                      child: Text(
+                        "See All",
+                        style: GoogleFonts.poppins(
+                          fontSize: 13,
+                          color: const Color(0xFF4A7043),
+                          fontWeight: FontWeight.bold,
                         ),
                       ),
                     ),
                   ],
                 ),
               ),
+
+              StreamBuilder<List<Product>>(
+                stream: service.productsStream(),
+                builder: (context, snapshot) {
+                  final products = snapshot.data ?? [];
+                  if (snapshot.connectionState == ConnectionState.waiting) {
+                    return const Padding(
+                      padding: EdgeInsets.all(24),
+                      child: Center(child: CircularProgressIndicator()),
+                    );
+                  }
+                  if (products.isEmpty) {
+                    return Padding(
+                      padding: const EdgeInsets.all(24),
+                      child: Text(
+                        'No products available.',
+                        style: GoogleFonts.poppins(color: Colors.grey[700]),
+                      ),
+                    );
+                  }
+                  final recommended = products.take(4).toList();
+                  return GridView.builder(
+                    shrinkWrap: true,
+                    physics: const NeverScrollableScrollPhysics(),
+                    padding: const EdgeInsets.all(24),
+                    gridDelegate:
+                        const SliverGridDelegateWithFixedCrossAxisCount(
+                      crossAxisCount: 2,
+                      childAspectRatio: 0.65,
+                      crossAxisSpacing: 16,
+                      mainAxisSpacing: 16,
+                    ),
+                    itemCount: recommended.length,
+                    itemBuilder: (context, index) =>
+                        _productCard(recommended[index]),
+                  );
+                },
+              ),
+
               const SizedBox(height: 20),
             ],
           ),

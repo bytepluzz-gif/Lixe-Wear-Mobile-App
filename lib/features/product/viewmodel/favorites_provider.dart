@@ -1,22 +1,31 @@
-// lib/providers/favorites_provider.dart
 import 'package:flutter/material.dart';
 import '../model/product.dart';
+import '../../../core/firestore_service.dart';
 
 class FavoritesProvider extends ChangeNotifier {
-  final List<Product> _favorites = [];
+  final FirestoreService _service = FirestoreService();
+  final List<String> _favoriteIds = [];
+  String? _uid;
 
-  List<Product> get favorites => _favorites;
+  List<String> get favoriteIds => _favoriteIds;
 
-  void toggleFavorite(Product product) {
-    if (_favorites.any((p) => p.id == product.id)) {
-      _favorites.removeWhere((p) => p.id == product.id);
-    } else {
-      _favorites.add(product);
-    }
-    notifyListeners();
+  void attachUser(String uid) {
+    _uid = uid;
+    _service.favoriteIdsStream(uid).listen((ids) {
+      _favoriteIds
+        ..clear()
+        ..addAll(ids);
+      notifyListeners();
+    });
+  }
+
+  Future<void> toggleFavorite(Product product) async {
+    final uid = _uid;
+    if (uid == null) return;
+    await _service.toggleFavorite(uid, product);
   }
 
   bool isFavorite(Product product) {
-    return _favorites.any((p) => p.id == product.id);
+    return _favoriteIds.contains(product.id);
   }
 }

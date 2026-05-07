@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import '../../../core/firestore_service.dart';
 import '../viewmodel/favorites_provider.dart';
+import '../model/product.dart';
 
 class FavoritesScreen extends StatelessWidget {
   const FavoritesScreen({super.key});
@@ -8,26 +10,20 @@ class FavoritesScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final favoritesProvider = Provider.of<FavoritesProvider>(context);
-    final favorites = favoritesProvider.favorites;
+    final service = context.read<FirestoreService>();
 
     return Scaffold(
       appBar: AppBar(title: const Text("Favorites")),
-      body: favorites.isEmpty
-          ? const Center(
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Icon(Icons.favorite_border, size: 80, color: Colors.grey),
-                  SizedBox(height: 16),
-                  Text("No favorites yet", style: TextStyle(fontSize: 18)),
-                  Text(
-                    "Tap ❤️ on any product to save it",
-                    style: TextStyle(color: Colors.grey),
-                  ),
-                ],
-              ),
-            )
-          : GridView.builder(
+      body: StreamBuilder<List<Product>>(
+        stream: service.productsStream(),
+        builder: (context, snapshot) {
+          final favorites = (snapshot.data ?? [])
+              .where((p) => favoritesProvider.favoriteIds.contains(p.id))
+              .toList();
+          if (favorites.isEmpty) {
+            return const Center(child: Text("No favorites yet"));
+          }
+          return GridView.builder(
               padding: const EdgeInsets.all(20),
               gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
                 crossAxisCount: 2,
@@ -86,7 +82,9 @@ class FavoritesScreen extends StatelessWidget {
                   ),
                 );
               },
-            ),
+            );
+        },
+      ),
     );
   }
 }

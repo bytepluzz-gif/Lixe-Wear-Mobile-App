@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:google_fonts/google_fonts.dart';
-import '../../../core/app_data.dart';
+import '../../../core/firestore_service.dart';
 import '../model/product.dart';
 import '../viewmodel/favorites_provider.dart';
 
@@ -26,14 +26,7 @@ class _ProductListingScreenState extends State<ProductListingScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final filteredProducts = AppData.allProducts.where((Product product) {
-      final matchesSearch = product.name.toLowerCase().contains(
-        searchQuery.toLowerCase(),
-      );
-      final matchesCategory =
-          _selectedCategory == "All" || product.category == _selectedCategory;
-      return matchesSearch && matchesCategory;
-    }).toList();
+    final service = context.read<FirestoreService>();
 
     return Scaffold(
       backgroundColor: const Color(0xFFF9F9F4),
@@ -159,28 +152,46 @@ class _ProductListingScreenState extends State<ProductListingScreen> {
           const SizedBox(height: 24),
           // Products Grid
           Expanded(
-            child: filteredProducts.isEmpty
-                ? Center(
+            child: StreamBuilder<List<Product>>(
+              stream: service.productsStream(),
+              builder: (context, snapshot) {
+                final allProducts = snapshot.data ?? [];
+                final filteredProducts = allProducts.where((Product product) {
+                  final matchesSearch = product.name.toLowerCase().contains(
+                    searchQuery.toLowerCase(),
+                  );
+                  final matchesCategory =
+                      _selectedCategory == "All" ||
+                      product.category == _selectedCategory;
+                  return matchesSearch && matchesCategory;
+                }).toList();
+                if (snapshot.connectionState == ConnectionState.waiting) {
+                  return const Center(child: CircularProgressIndicator());
+                }
+                if (filteredProducts.isEmpty) {
+                  return Center(
                     child: Text(
                       "No items found matching your selection.",
                       style: GoogleFonts.poppins(
                         color: const Color(0xFF757575),
                       ),
                     ),
-                  )
-                : GridView.builder(
-                    padding: const EdgeInsets.symmetric(horizontal: 24),
-                    gridDelegate:
-                        const SliverGridDelegateWithFixedCrossAxisCount(
-                          crossAxisCount: 2,
-                          childAspectRatio: 0.6,
-                          crossAxisSpacing: 16,
-                          mainAxisSpacing: 24,
-                        ),
-                    itemCount: filteredProducts.length,
-                    itemBuilder: (context, index) =>
-                        _productCard(filteredProducts[index]),
+                  );
+                }
+                return GridView.builder(
+                  padding: const EdgeInsets.symmetric(horizontal: 24),
+                  gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                    crossAxisCount: 2,
+                    childAspectRatio: 0.6,
+                    crossAxisSpacing: 16,
+                    mainAxisSpacing: 24,
                   ),
+                  itemCount: filteredProducts.length,
+                  itemBuilder: (context, index) =>
+                      _productCard(filteredProducts[index]),
+                );
+              },
+            ),
           ),
         ],
       ),

@@ -1,7 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:firebase_core/firebase_core.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+import 'firebase_options.dart';
 
+import 'core/auth_provider.dart';
+import 'core/firestore_service.dart';
 import 'features/auth/login_page.dart';
 import 'features/auth/register_page.dart';
 import 'features/product/view/home_screen.dart';
@@ -20,18 +25,31 @@ import 'features/profile/customer_support_screen.dart';
 import 'features/profile/add_payment_screen.dart';
 import 'features/profile/personal_info_screen.dart';
 import 'features/profile/my_card_screen.dart';
+import 'features/profile/order_history_screen.dart';
 
 void main() {
-  debugPrint('--- MAIN START ---');
-  try {
-    WidgetsFlutterBinding.ensureInitialized();
-    debugPrint('--- BINDING INITIALIZED ---');
-    runApp(const MyApp());
-    debugPrint('--- RUN APP CALLED ---');
-  } catch (e, stack) {
-    debugPrint('--- CRITICAL ERROR IN MAIN ---');
-    debugPrint(e.toString());
-    debugPrint(stack.toString());
+  WidgetsFlutterBinding.ensureInitialized();
+  runApp(const Bootstrapper());
+}
+
+class Bootstrapper extends StatelessWidget {
+  const Bootstrapper({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return FutureBuilder(
+      future: Firebase.initializeApp(
+        options: DefaultFirebaseOptions.currentPlatform,
+      ),
+      builder: (context, snapshot) {
+        if (snapshot.connectionState != ConnectionState.done) {
+          return const MaterialApp(
+            home: Scaffold(body: Center(child: CircularProgressIndicator())),
+          );
+        }
+        return const MyApp();
+      },
+    );
   }
 }
 
@@ -44,6 +62,8 @@ class MyApp extends StatelessWidget {
       providers: [
         ChangeNotifierProvider(create: (_) => CartProvider()),
         ChangeNotifierProvider(create: (_) => FavoritesProvider()),
+        ChangeNotifierProvider(create: (_) => AppAuthProvider()),
+        Provider(create: (_) => FirestoreService()),
       ],
       child: MaterialApp(
         title: 'LuxeWear',
@@ -74,9 +94,9 @@ class MyApp extends StatelessWidget {
             ),
           ),
         ),
-        initialRoute: '/login',
+        initialRoute: '/',
         routes: {
-          '/': (context) => const LoginPage(),
+          '/': (context) => const AuthGate(),
           '/login': (context) => const LoginPage(),
           '/register': (context) => const RegisterPage(),
           '/home': (context) => const MainAppScreen(),
@@ -93,6 +113,7 @@ class MyApp extends StatelessWidget {
           '/add-payment': (context) => const AddPaymentScreen(),
           '/personal-info': (context) => const PersonalInfoScreen(),
           '/my-card': (context) => const MyCardScreen(),
+          '/orders': (context) => const OrderHistoryScreen(),
         },
       ),
     );
@@ -108,6 +129,7 @@ class MainAppScreen extends StatefulWidget {
 
 class _MainAppScreenState extends State<MainAppScreen> {
   int _selectedIndex = 0;
+  bool _attachedProviders = false;
 
   final List<Widget> _screens = [
     const HomeScreen(),
@@ -122,6 +144,12 @@ class _MainAppScreenState extends State<MainAppScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final user = FirebaseAuth.instance.currentUser;
+    if (user != null && !_attachedProviders) {
+      context.read<CartProvider>().attachUser(user.uid);
+      context.read<FavoritesProvider>().attachUser(user.uid);
+      _attachedProviders = true;
+    }
     return Scaffold(
       body: _screens[_selectedIndex],
       bottomNavigationBar: BottomNavigationBar(
@@ -270,6 +298,7 @@ class _MainAppScreenState extends State<MainAppScreen> {
           Navigator.pop(context);
           if (route != null) {
             if (isLogout) {
+              context.read<AppAuthProvider>().signOut();
               Navigator.pushReplacementNamed(context, route);
             } else {
               Navigator.pushNamed(context, route);
@@ -279,6 +308,23 @@ class _MainAppScreenState extends State<MainAppScreen> {
           }
         },
       ),
+    );
+  }
+}
+
+class AuthGate extends StatelessWidget {
+  const AuthGate({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return StreamBuilder<User?>(
+      stream: FirebaseAuth.instance.authStateChanges(),
+      builder: (context, snapshot) {
+        if (snapshot.connectionState == ConnectionState.waiting) {
+          return const Scaffold(body: Center(child: CircularProgressIndicator()));
+        }
+        return snapshot.data == null ? const LoginPage() : const MainAppScreen();
+      },
     );
   }
 }

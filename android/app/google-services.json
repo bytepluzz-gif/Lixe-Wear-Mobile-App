@@ -1,0 +1,39 @@
+{
+  "project_info": {
+    "project_number": "216860803883",
+    "project_id": "luxewear-259b1",
+    "storage_bucket": "luxewear-259b1.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:216860803883:android:cb3affda13e241e4027b6e",
+        "android_client_info": {
+          "package_name": "com.example.project_2"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "216860803883-7prcddolg4ekkm629m6oj7abqgk1l4mu.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCVA35EUGHSpfo_RuwYPyVommN-lcLTA88"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "216860803883-7prcddolg4ekkm629m6oj7abqgk1l4mu.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

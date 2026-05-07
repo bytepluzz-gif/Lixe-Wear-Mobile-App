@@ -1,8 +1,28 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:provider/provider.dart';
+import '../../core/auth_provider.dart';
 
-class RegisterPage extends StatelessWidget {
+class RegisterPage extends StatefulWidget {
   const RegisterPage({super.key});
+
+  @override
+  State<RegisterPage> createState() => _RegisterPageState();
+}
+
+class _RegisterPageState extends State<RegisterPage> {
+  final _nameController = TextEditingController();
+  final _emailController = TextEditingController();
+  final _passwordController = TextEditingController();
+  bool _loading = false;
+
+  @override
+  void dispose() {
+    _nameController.dispose();
+    _emailController.dispose();
+    _passwordController.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -44,27 +64,11 @@ class RegisterPage extends StatelessWidget {
             ),
             const SizedBox(height: 40),
 
-            _buildField("Full Name", "John Doe", Icons.person_outline),
+            _buildField("Full Name", _nameController, false),
             const SizedBox(height: 20),
-            _buildField(
-              "Email Address",
-              "john@example.com",
-              Icons.email_outlined,
-            ),
+            _buildField("Email Address", _emailController, false),
             const SizedBox(height: 20),
-            _buildField(
-              "Password",
-              "••••••••",
-              Icons.lock_outline,
-              isPassword: true,
-            ),
-            const SizedBox(height: 20),
-            _buildField(
-              "Confirm Password",
-              "••••••••",
-              Icons.shield_outlined,
-              isPassword: true,
-            ),
+            _buildField("Password", _passwordController, true),
 
             const SizedBox(height: 30),
 
@@ -72,8 +76,49 @@ class RegisterPage extends StatelessWidget {
               width: double.infinity,
               height: 56,
               child: ElevatedButton(
-                onPressed: () =>
-                    Navigator.pushReplacementNamed(context, '/home'),
+                onPressed: _loading
+                    ? null
+                    : () async {
+                        if (_nameController.text.trim().isEmpty) {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            const SnackBar(content: Text('Enter full name')),
+                          );
+                          return;
+                        }
+                        if (!_emailController.text.contains('@')) {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            const SnackBar(content: Text('Enter a valid email')),
+                          );
+                          return;
+                        }
+                        if (_passwordController.text.length < 6) {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            const SnackBar(
+                              content: Text(
+                                'Password must be at least 6 characters',
+                              ),
+                            ),
+                          );
+                          return;
+                        }
+                        try {
+                          setState(() => _loading = true);
+                          await context.read<AppAuthProvider>().register(
+                                _nameController.text.trim(),
+                                _emailController.text.trim(),
+                                _passwordController.text.trim(),
+                              );
+                          if (!context.mounted) return;
+                          Navigator.pushReplacementNamed(context, '/home');
+                        } catch (e) {
+                          if (!context.mounted) return;
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            SnackBar(content: Text('Registration failed: $e')),
+                          );
+                        } finally {
+                          if (mounted) setState(() => _loading = false);
+                        }
+                      },
                 style: ElevatedButton.styleFrom(
                   backgroundColor: const Color(0xFF042404),
                   foregroundColor: Colors.white,
@@ -82,10 +127,15 @@ class RegisterPage extends StatelessWidget {
                   ),
                   elevation: 4,
                 ),
-                child: Text(
-                  "Create Account",
-                  style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
-                ),
+                child: _loading
+                    ? const CircularProgressIndicator(color: Colors.white)
+                    : Text(
+                        "Create Account",
+                        style: TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
               ),
             ),
 
@@ -109,18 +159,38 @@ class RegisterPage extends StatelessWidget {
             ),
             const SizedBox(height: 24),
 
-            Row(
-              children: [
-                _socialButton(
+            SizedBox(
+              width: double.infinity,
+              height: 56,
+              child: OutlinedButton.icon(
+                onPressed: _loading
+                    ? null
+                    : () async {
+                        final nav = Navigator.of(context);
+                        final messenger = ScaffoldMessenger.of(context);
+                        try {
+                          setState(() => _loading = true);
+                          await context.read<AppAuthProvider>().signInWithGoogle();
+                          if (!context.mounted) return;
+                          nav.pushReplacementNamed('/home');
+                        } catch (e) {
+                          if (!context.mounted) return;
+                          messenger.showSnackBar(
+                            SnackBar(content: Text('Google sign-in failed: $e')),
+                          );
+                        } finally {
+                          if (mounted) setState(() => _loading = false);
+                        }
+                      },
+                icon: const Icon(Icons.g_mobiledata, size: 28),
+                label: Text(
                   "Google",
-                  "https://img.icons8.com/color/48/google-logo.png",
+                  style: GoogleFonts.poppins(
+                    fontWeight: FontWeight.bold,
+                    fontSize: 14,
+                  ),
                 ),
-                const SizedBox(width: 16),
-                _socialButton(
-                  "Apple",
-                  "https://img.icons8.com/ios-filled/50/000000/mac-os.png",
-                ),
-              ],
+              ),
             ),
 
             const SizedBox(height: 40),
@@ -161,93 +231,17 @@ class RegisterPage extends StatelessWidget {
 
   Widget _buildField(
     String label,
-    String hint,
-    IconData icon, {
-    bool isPassword = false,
-  }) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Padding(
-          padding: const EdgeInsets.only(left: 4, bottom: 8),
-          child: Text(
-            label,
-            style: GoogleFonts.poppins(
-              fontWeight: FontWeight.w600,
-              fontSize: 14,
-              color: const Color(0xFF424242),
-            ),
-          ),
-        ),
-        TextField(
-          obscureText: isPassword,
-          decoration: InputDecoration(
-            hintText: hint,
-            hintStyle: GoogleFonts.poppins(color: const Color(0xFFBDBDBD)),
-            prefixIcon: Icon(icon, color: const Color(0xFF757575), size: 20),
-            suffixIcon: isPassword
-                ? Icon(
-                    Icons.visibility_off_outlined,
-                    color: const Color(0xFFBDBDBD),
-                    size: 20,
-                  )
-                : null,
-            filled: true,
-            fillColor: Colors.white,
-            contentPadding: const EdgeInsets.symmetric(
-              horizontal: 20,
-              vertical: 16,
-            ),
-            border: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(30),
-              borderSide: BorderSide(color: const Color(0xFFE0E0E0)),
-            ),
-            enabledBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(30),
-              borderSide: BorderSide(color: const Color(0xFFE0E0E0)),
-            ),
-            focusedBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(30),
-              borderSide: const BorderSide(
-                color: Color(0xFF4A7043),
-                width: 1.5,
-              ),
-            ),
-          ),
-        ),
-      ],
-    );
-  }
-
-  Widget _socialButton(String text, String iconUrl) {
-    return Expanded(
-      child: Container(
-        height: 56,
-        decoration: BoxDecoration(
-          color: const Color(0xFFF0F0E8),
-          borderRadius: BorderRadius.circular(30),
-          border: Border.all(color: const Color(0xFFE0E0E0)),
-        ),
-        child: Row(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Image.network(
-              iconUrl,
-              height: 24,
-              errorBuilder: (context, error, stackTrace) =>
-                  const Icon(Icons.broken_image, size: 24),
-            ),
-            const SizedBox(width: 12),
-            Text(
-              text,
-              style: GoogleFonts.poppins(
-                fontWeight: FontWeight.bold,
-                fontSize: 14,
-                color: Colors.black87,
-              ),
-            ),
-          ],
-        ),
+    TextEditingController controller,
+    bool isPassword,
+  ) {
+    return TextField(
+      controller: controller,
+      obscureText: isPassword,
+      decoration: InputDecoration(
+        labelText: label,
+        filled: true,
+        fillColor: Colors.white,
+        border: OutlineInputBorder(borderRadius: BorderRadius.circular(20)),
       ),
     );
   }

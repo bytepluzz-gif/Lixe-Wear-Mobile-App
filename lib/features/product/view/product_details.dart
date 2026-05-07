@@ -164,7 +164,7 @@ class _ProductDetailsScreenState extends State<ProductDetailsScreen> {
                           ),
                           children: [
                             Text(
-                              "A timeless piece for your wardrobe. Crafted with sustainable materials, this item combines comfort with unparalleled style. Ideal for minimalist styling.",
+                              product.description,
                               style: TextStyle(
                                 fontSize: 14,
                                 color: const Color(0xFF757575),
@@ -262,14 +262,15 @@ class _ProductDetailsScreenState extends State<ProductDetailsScreen> {
             child: SizedBox(
               height: 60,
               child: ElevatedButton(
-                onPressed: () {
+                onPressed: () async {
                   if (_selectedSize == null) {
                     ScaffoldMessenger.of(context).showSnackBar(
                       const SnackBar(content: Text("Please select a size")),
                     );
                     return;
                   }
-                  cartProvider.addToCart(product);
+                  await cartProvider.addToCart(product, _selectedSize!);
+                  if (!context.mounted) return;
                   Navigator.pushNamed(context, '/checkout');
                 },
                 style: ElevatedButton.styleFrom(
